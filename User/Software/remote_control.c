@@ -284,7 +284,7 @@ void RC_Controller()
     /*云台控制*/
     if ((Global.Auto.input.Auto_control_online <= 0 || Global.Auto.mode == NONE || Global.Auto.input.control_mode == 0) && Global.Gimbal.mode == NORMAL)
     {
-        Gimbal_SetPitchAngle(Global.Gimbal.input.pitch + RC_data.rc.ch[3] / 2000.0f);
+        Gimbal_SetPitchAngle(Global.Gimbal.input.pitch - RC_data.rc.ch[1] / 2000.0f);
     }
     /*自瞄控制*/
     if (RC_data.rc.s[0] == RC_SW_DOWN &&

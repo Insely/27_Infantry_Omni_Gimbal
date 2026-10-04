@@ -127,8 +127,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
   {
     HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data);
     // ≥¨µÁ÷°
-
-
     if ((rx_header.Identifier == Supercap_receive_id) ||
         (rx_header.Identifier == Supercap_chassis_power_id))
       Supercup_DecodeCandata(hfdcan, rx_data,rx_header.Identifier);
