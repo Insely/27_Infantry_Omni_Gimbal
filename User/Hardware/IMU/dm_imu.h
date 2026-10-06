@@ -1,80 +1,37 @@
 /*
- * @Date: 2025-10-04 11:35:55
- * @LastEditors: hao && (hao@qlu.edu.cn)
- * @LastEditTime: 2025-10-04 19:33:15
- * @FilePath: \Season-26-Code\User\Hardware\IMU\dm_imu.h
+ * @Author: Nas(1319621819@qq.com)
+ * @Date: 2025-12-25 19:37:17
+ * @LastEditors: Nas(1319621819@qq.com)
+ * @LastEditTime: 2025-12-27 08:37:56
+ * @FilePath: \Regular_Sentry_Gimbal\User\Hardware\IMU\dm_imu.h
  */
+
 #ifndef __DM_IMU_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define __DM_IMU_H
 
 #include "stm32h7xx_hal.h"
 
-/*
-//rs485Ğ­Òé
-typedef struct
-{
-    float accel[3];
-    float gyro[3];
-    float roll;
-    float pitch;
-    float yaw;
-    float quaternion[4];
-    uint32_t update_cnt; // Êı¾İ¸üĞÂ¼ÆÊıÆ÷£¬ÓÃÓÚÔÚÏß¼ì²â
-} dm_imu_t;
-
-extern dm_imu_t dm_imu_data;
-
-// Ç¿ÖÆ 1 ×Ö½Ú¶ÔÆë£¬·ÀÖ¹±àÒëÆ÷×Ô¶¯Ìî³äµ¼ÖÂ½á¹¹Ìå´óĞ¡ÓëĞ­Òé²»·û 
-#pragma pack(push, 1)
-
-// 19×Ö½Ú³£¹æÊı¾İÖ¡ (¼ÓËÙ¶È 0x01¡¢½ÇËÙ¶È 0x02¡¢Å·À­½Ç 0x03)
-typedef struct
-{
-    uint8_t header;   // 0x55
-    uint8_t tag;
-    uint8_t slave_id;
-    uint8_t reg;      // ¼Ä´æÆ÷ID
-    float data[3];    // 3¸öfloatÊı¾İ
-    uint16_t crc;
-    uint8_t tail;     // 0x0A
-} normal_packet_t;
-
-// 23×Ö½ÚÀ©Õ¹Êı¾İÖ¡ (ËÄÔªÊı 0x04)
-typedef struct
-{
-    uint8_t header;   // 0x55
-    uint8_t tag;
-    uint8_t slave_id;
-    uint8_t reg;      // 0x04
-    float data[4];    // 4¸öfloatÊı¾İ
-    uint16_t crc;
-    uint8_t tail;     // 0x0A
-} normal_ext_packet_t;
-
-#pragma pack(pop)
-
-// Íâ²¿µ÷ÓÃ½Ó¿Ú
-void DM_IMU_RS485_Decode(uint8_t* pData, uint16_t len);
-*/
 
 
-//canĞ­Òé
-
-#define ACCEL_CAN_MAX (58.8f)    // ¼ÓËÙ¶ÈCAN½âÂë×î´óÖµ
-#define ACCEL_CAN_MIN	(-58.8f)  // ¼ÓËÙ¶ÈCAN½âÂë×îĞ¡Öµ
-#define GYRO_CAN_MAX	(34.88f)  // ÍÓÂİÒÇCAN½âÂë×î´óÖµ
-#define GYRO_CAN_MIN	(-34.88f) // ÍÓÂİÒÇCAN½âÂë×îĞ¡Öµ
-#define PITCH_CAN_MAX	(90.0f)   // pitch½ÇCAN½âÂë×î´óÖµ
-#define PITCH_CAN_MIN	(-90.0f)  // pitch½ÇCAN½âÂë×îĞ¡Öµ
-#define ROLL_CAN_MAX	(180.0f)  // roll½ÇCAN½âÂë×î´óÖµ
-#define ROLL_CAN_MIN	(-180.0f) // roll½ÇCAN½âÂë×îĞ¡Öµ
-#define YAW_CAN_MAX		(180.0f)  // yaw½ÇCAN½âÂë×î´óÖµ
-#define YAW_CAN_MIN 	(-180.0f) // yaw½ÇCAN½âÂë×îĞ¡Öµ
-#define TEMP_MIN			(0.0f)    // ÎÂ¶È½âÂë×îĞ¡Öµ
-#define TEMP_MAX			(60.0f)   // ÎÂ¶È½âÂë×î´óÖµ
-#define Quaternion_MIN	(-1.0f)  // ËÄÔªÊı·ÖÁ¿½âÂë×îĞ¡Öµ
-#define Quaternion_MAX	(1.0f)   // ËÄÔªÊı·ÖÁ¿½âÂë×î´óÖµ
-#define IMU_MST_ID      (0x11)   // IMUÖ÷»úCANÏìÓ¦ID
+#define ACCEL_CAN_MAX (235.2f)
+#define ACCEL_CAN_MIN	(-235.2f)
+#define GYRO_CAN_MAX	(34.88f)
+#define GYRO_CAN_MIN	(-34.88f)
+#define PITCH_CAN_MAX	(90.0f)
+#define PITCH_CAN_MIN	(-90.0f)
+#define ROLL_CAN_MAX	(180.0f)
+#define ROLL_CAN_MIN	(-180.0f)
+#define YAW_CAN_MAX		(180.0f)
+#define YAW_CAN_MIN 	(-180.0f)
+#define TEMP_MIN			(0.0f)
+#define TEMP_MAX			(60.0f)
+#define Quaternion_MIN	(-1.0f)
+#define Quaternion_MAX	(1.0f)
 
 #define CMD_READ 0
 #define CMD_WRITE 1
@@ -124,14 +81,15 @@ typedef enum
 }reg_id_e;
 
 
+
 typedef struct
 {
-    uint8_t can_id;
+	uint8_t can_id;
 	uint8_t mst_id;
 	
 	FDCAN_HandleTypeDef *can_handle;
-
-	float pitch;
+	
+	float pitch;//æ—‹è½¬åæ ‡ç³»
 	float roll;
 	float yaw;
 
@@ -144,23 +102,13 @@ typedef struct
 
 	float last_yaw;
 	float yaw_cnt;
-
-    uint32_t request_cnt;
+	
+	uint32_t request_cnt;
 
 
 }imu_t;
-
 extern imu_t dm_imu_gimbal;
-
 void imu_init(uint8_t can_id,uint8_t mst_id,FDCAN_HandleTypeDef *hfdcan,imu_t *imu);
-
-void IMU_RequestData(FDCAN_HandleTypeDef* hfdcan,uint16_t can_id,uint8_t reg);
-void IMU_UpdateAccel(uint8_t* pData,imu_t *imu);
-void IMU_UpdateGyro(uint8_t* pData,imu_t *imu);
-void IMU_UpdateEuler(uint8_t* pData,imu_t *imu);
-void IMU_UpdateQuaternion(uint8_t* pData,imu_t *imu);
-void IMU_UpdateData(uint8_t* pData,imu_t *imu);
-
 void imu_write_reg(uint8_t reg_id,uint32_t data,imu_t *imu);
 void imu_read_reg(uint8_t reg_id,imu_t *imu);
 void imu_reboot(imu_t *imu);
@@ -179,7 +127,12 @@ void imu_request_accel(imu_t *imu);
 void imu_request_gyro(imu_t *imu);
 void imu_request_euler(imu_t *imu);
 void imu_request_quat(imu_t *imu);
- 
+void IMU_Rotate_Frame(float angle_deg,imu_t *imu);
 void IMU_MatchData(imu_t *imu);
+void IMU_UpdateData(uint8_t* pData,imu_t *imu);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

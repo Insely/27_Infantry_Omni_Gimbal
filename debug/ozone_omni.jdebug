@@ -22,19 +22,17 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.AddPathSubstitute ("D:/RM/code/25-EE-code/debug", "$(ProjectDir)");
-  Project.AddPathSubstitute ("d:/rm/code/25-ee-code/debug", "$(ProjectDir)");
   Project.SetDevice ("STM32H723VG");
-  Project.SetHostIF ("USB", "1047604111");
+  Project.SetHostIF ("USB", "");
   Project.SetTargetIF ("SWD");
   Project.SetTIFSpeed ("4 MHz");
   Project.AddSvdFile ("$(InstallDir)/Config/CPU/Cortex-M7F.svd");
-  Project.AddSvdFile ("D:/RM/code/25-EE-code/STM32H723.svd");
+  Project.AddSvdFile ("$(ProjectDir)/STM32H723.svd");
   //
   // User settings
   //
   Project.SetOSPlugin ("FreeRTOSPlugin");
-  File.Open ("D:/RM/code/25-EE-code/build/Omni_damiao.elf");
+  File.Open ("$(ProjectDir)/../build/27_Infantry_Gimbal.elf");
 }
 
 /*********************************************************************

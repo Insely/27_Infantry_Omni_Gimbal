@@ -4,10 +4,10 @@
     {
       "name": "STlink",
       "cwd": "${workspaceRoot}",
-      "executable": "${workspaceRoot}/build/26_Code.elf",
+      "executable": "${workspaceRoot}/build/27_Infantry_Gimbal.elf",
       "request": "launch",
       "type": "cortex-debug",
-      "device": "${workspaceRoot}/debug/STM32H723VGTx",
+      "device": "STM32H723VGTx",
       "svdFile": "${workspaceRoot}/debug/STM32H723.svd",
       "servertype": "openocd",
       "configFiles": [
@@ -25,10 +25,10 @@
     {
       "name": "DAPlink",
       "cwd": "${workspaceRoot}",
-      "executable": "${workspaceRoot}/build/26_Code.elf",
+      "executable": "${workspaceRoot}/build/27_Infantry_Gimbal.elf",
       "request": "launch",
       "type": "cortex-debug",
-      "device": "${workspaceRoot}/debug/STM32H723VGTx",
+      "device": "STM32H723VGTx",
       "svdFile": "${workspaceRoot}/debug/STM32H723.svd",
       "servertype": "openocd",
       "configFiles": [
@@ -41,25 +41,6 @@
       "runToEntryPoint": "main",
       "rtos": "FreeRTOS",
       "preLaunchTask": "build task"
-    },
-    {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "d:/RM/code/25-EE-code/Core/Src",
-      "program": "d:/RM/code/25-EE-code/Core/Src/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
     }
   ]
 }

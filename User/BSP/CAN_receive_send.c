@@ -1,7 +1,7 @@
 /**
  * @file CAN_receive_send.c
  * @author Siri (lixirui2017@outlook.com)
- * @brief can bsp²ã·¢ËÍÓë½ÓÊÜ
+ * @brief can bspå±‚å‘é€ä¸æ¥å—
  * @version 0.1
  * @date 2024-10-19
  *
@@ -9,21 +9,20 @@
  *
  */
 // #include "cover_headerfile_h.h"
-#include "can_receive_send.h"
+#include "CAN_receive_send.h"
+#include "BoardLink.h"
 #include "motor.h"
-#include "canopen_parser.h"
-#include "supercup.h"
 #include "dm_imu.h"
+#include "supercup.h"
 
-// CAN¼Ä´æÆ÷¼°¿ØÖÆÆ÷
+// CANå¯„å­˜å™¨åŠæ§åˆ¶å™¨
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
-extern FDCAN_HandleTypeDef hfdcan3; // ¶¨ÒåÔ­ĞÍÔÚfdcan.cÎÄ¼ş
-
+extern FDCAN_HandleTypeDef hfdcan3; // å®šä¹‰åŸå‹åœ¨fdcan.cæ–‡ä»¶
 
 
 /**
- * @brief »ñÈ¡Ö¸¶¨CAN×ÜÏßµÄ¾ä±ú
+ * @brief è·å–æŒ‡å®šCANæ€»çº¿çš„å¥æŸ„
  */
 FDCAN_HandleTypeDef* Get_CanHandle(uint8_t can_bus) {
     switch (can_bus) {
@@ -35,21 +34,21 @@ FDCAN_HandleTypeDef* Get_CanHandle(uint8_t can_bus) {
 }
 
 /**
- * @brief ³õÊ¼»¯can,°üº¬¹ıÂËÆ÷ÅäÖÃÓëÊ¹ÄÜ
+ * @brief åˆå§‹åŒ–can,åŒ…å«è¿‡æ»¤å™¨é…ç½®ä¸ä½¿èƒ½
  *
  */
 void Can_Init(void)
 {
   FDCAN_FilterTypeDef fdcan_filter;
 
-  fdcan_filter.IdType = FDCAN_STANDARD_ID;             // ¹ıÂË±ê×¼ID
-  fdcan_filter.FilterIndex = 0;                        // ÂË²¨Æ÷Ë÷Òı
-  fdcan_filter.FilterType = FDCAN_FILTER_MASK;         // ÑÚÂëÄ£Ê½
-  fdcan_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; // ¹ıÂËÆ÷0¹ØÁªµ½FIFO0
-  fdcan_filter.FilterID1 = 0x00000000;                 // ²»È¥¹ıÂËÈÎºÎID
-  fdcan_filter.FilterID2 = 0x00000000;                 // Í¬ÉÏ
+  fdcan_filter.IdType = FDCAN_STANDARD_ID;             // è¿‡æ»¤æ ‡å‡†ID
+  fdcan_filter.FilterIndex = 0;                        // æ»¤æ³¢å™¨ç´¢å¼•
+  fdcan_filter.FilterType = FDCAN_FILTER_MASK;         // æ©ç æ¨¡å¼
+  fdcan_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; // è¿‡æ»¤å™¨0å…³è”åˆ°FIFO0
+  fdcan_filter.FilterID1 = 0x00000000;                 // ä¸å»è¿‡æ»¤ä»»ä½•ID
+  fdcan_filter.FilterID2 = 0x00000000;                 // åŒä¸Š
 
-  HAL_FDCAN_ConfigFilter(&hfdcan1, &fdcan_filter); // ½«ÉÏÊöÅäÖÃµ½CAN1
+  HAL_FDCAN_ConfigFilter(&hfdcan1, &fdcan_filter); // å°†ä¸Šè¿°é…ç½®åˆ°CAN1
   HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_Start(&hfdcan1);
@@ -68,79 +67,93 @@ void Can_Init(void)
 /**
 ************************************************************************
 * @brief:      	Fdcanx_SendData(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
-* @param:       hfdcan£ºFDCAN¾ä±ú
-* @param:       id£ºCANÉè±¸ID
-* @param:       data£º·¢ËÍµÄÊı¾İ
-* @param:       len£º·¢ËÍµÄÊı¾İ³¤¶È
+* @param:       hfdcanï¼šFDCANå¥æŸ„
+* @param:       idï¼šCANè®¾å¤‡ID
+* @param:       dataï¼šå‘é€çš„æ•°æ®
+* @param:       lenï¼šå‘é€çš„æ•°æ®é•¿åº¦
 * @retval:     	void
-* @details:    	·¢ËÍÊı¾İ
+* @details:    	å‘é€æ•°æ®
 ************************************************************************
 **/
 uint8_t Fdcanx_SendData(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
 {
-  FDCAN_TxHeaderTypeDef TxHeader;
+  if (hfdcan == NULL || data == NULL || len > 8U || id > 0x7FFU) return 1;
+  FDCAN_TxHeaderTypeDef TxHeader = {0};
 
   TxHeader.Identifier = id;
-  TxHeader.IdType = FDCAN_STANDARD_ID;              // ±ê×¼ID
-  TxHeader.TxFrameType = FDCAN_DATA_FRAME;          // Êı¾İÖ¡
-  TxHeader.DataLength = FDCAN_DLC_BYTES_8;          // ·¢ËÍÊı¾İ³¤¶È
-  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;  // ÉèÖÃ´íÎó×´Ì¬Ö¸Ê¾
-  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;           // ²»¿ªÆô¿É±ä²¨ÌØÂÊ
-  TxHeader.FDFormat = FDCAN_CLASSIC_CAN;            // ÆÕÍ¨CAN¸ñÊ½
-  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS; // ÓÃÓÚ·¢ËÍÊÂ¼şFIFO¿ØÖÆ, ²»´æ´¢
-  TxHeader.MessageMarker = 0x00;                    // ÓÃÓÚ¸´ÖÆµ½TX EVENT FIFOµÄÏûÏ¢MakerÀ´Ê¶±ğÏûÏ¢×´Ì¬£¬·¶Î§0µ½0xFF
+  TxHeader.IdType = FDCAN_STANDARD_ID;              // æ ‡å‡†ID
+  TxHeader.TxFrameType = FDCAN_DATA_FRAME;          // æ•°æ®å¸§
+  static const uint32_t dlc[] = {FDCAN_DLC_BYTES_0,FDCAN_DLC_BYTES_1,FDCAN_DLC_BYTES_2,FDCAN_DLC_BYTES_3,FDCAN_DLC_BYTES_4,FDCAN_DLC_BYTES_5,FDCAN_DLC_BYTES_6,FDCAN_DLC_BYTES_7,FDCAN_DLC_BYTES_8};
+  TxHeader.DataLength = dlc[len];          // å‘é€æ•°æ®é•¿åº¦
+  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;  // è®¾ç½®é”™è¯¯çŠ¶æ€æŒ‡ç¤º
+  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;           // ä¸å¼€å¯å¯å˜æ³¢ç‰¹ç‡
+  TxHeader.FDFormat = FDCAN_CLASSIC_CAN;            // æ™®é€šCANæ ¼å¼
+  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS; // ç”¨äºå‘é€äº‹ä»¶FIFOæ§åˆ¶, ä¸å­˜å‚¨
+  TxHeader.MessageMarker = 0x00;                    // ç”¨äºå¤åˆ¶åˆ°TX EVENT FIFOçš„æ¶ˆæ¯Makeræ¥è¯†åˆ«æ¶ˆæ¯çŠ¶æ€ï¼ŒèŒƒå›´0åˆ°0xFF
 
   if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, data) != HAL_OK)
-    return 1; // ·¢ËÍ
+    return 1; // å‘é€*
   return 0;
 }
 
 /**
 ************************************************************************
 * @brief:      	Fdcanx_Receive(FDCAN_HandleTypeDef *hfdcan, uint8_t *buf)
-* @param:       hfdcan£ºFDCAN¾ä±ú
-* @param:       buf£º½ÓÊÕÊı¾İ»º´æ
-* @retval:     	½ÓÊÕµÄÊı¾İ³¤¶È
-* @details:    	½ÓÊÕÊı¾İ
+* @param:       hfdcanï¼šFDCANå¥æŸ„
+* @param:       bufï¼šæ¥æ”¶æ•°æ®ç¼“å­˜
+* @retval:     	æ¥æ”¶çš„æ•°æ®é•¿åº¦
+* @details:    	æ¥æ”¶æ•°æ®
 ************************************************************************
 **/
 uint8_t Fdcanx_Receive(FDCAN_HandleTypeDef *hfdcan, FDCAN_RxHeaderTypeDef *fdcan_RxHeader, uint8_t *buf)
 {
   if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, fdcan_RxHeader, buf) != HAL_OK)
-    return 0; // ½ÓÊÕÊı¾İ
+    return 0; // æ¥æ”¶æ•°æ®
   return fdcan_RxHeader->DataLength >> 16;
 }
 
 /**
- * @brief CAN½ÓÊÜ»Øµ÷º¯Êı
+ * @brief CANæ¥å—å›è°ƒå‡½æ•°
  *
  * @param hfdcan
  * @param RxFifo0ITs
  */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
+  FDCAN_RxHeaderTypeDef rx_header; // CAN æ•°æ®æŒ‡é’ˆ
+  uint8_t rx_data[64];              // è·å–åˆ°çš„æ•°æ®
 
-  FDCAN_RxHeaderTypeDef rx_header; // CAN Êı¾İÖ¸Õë
-  uint8_t rx_data[8];              // »ñÈ¡µ½µÄÊı¾İ
+  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) == RESET &&
+      HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) == 0U)
+    return;
 
-  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
+  /* ä¸€æ¬¡ä¸­æ–­æ’ç©º FIFOï¼Œé¿å…åŒæ¿å¤šå¸§çªå‘æ—¶åç»­å¸§é•¿æœŸæ»ç•™æˆ–æº¢å‡ºã€‚ */
+  while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0U)
   {
-    HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data);
-    // ³¬µçÖ¡
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK)
+      break;
+
+    if (rx_header.IdType != FDCAN_STANDARD_ID || rx_header.RxFrameType != FDCAN_DATA_FRAME ||
+        rx_header.DataLength != FDCAN_DLC_BYTES_8) continue;
+
+    if (BoardLink_RxDispatch(hfdcan, (uint16_t)rx_header.Identifier, rx_data))
+      continue;  // åŒæ¿æ¶ˆæ¯å¤„ç†å®Œåç»§ç»­å– FIFO ä¸­çš„ä¸‹ä¸€å¸§
+    // è¶…ç”µå¸§
     if ((rx_header.Identifier == Supercap_receive_id) ||
         (rx_header.Identifier == Supercap_chassis_power_id))
       Supercup_DecodeCandata(hfdcan, rx_data,rx_header.Identifier);
-    //IMUÖ¡
-    if(hfdcan == dm_imu_gimbal.can_handle && rx_header.Identifier == dm_imu_gimbal.mst_id)
-    IMU_UpdateData(rx_data, &dm_imu_gimbal);
-    // µç»úÖ¡
+    //IMUå¸§
+     if(hfdcan == dm_imu_gimbal.can_handle && rx_header.Identifier == dm_imu_gimbal.mst_id)
+      IMU_UpdateData(rx_data, &dm_imu_gimbal);
+    // ç”µæœºå¸§
     DJIMotor_DecodeCandata(hfdcan, rx_header.Identifier, rx_data);
     DMMotor_DecodeCandata(hfdcan, rx_header.Identifier, rx_data);
+    /* DMMotor124_DecodeCandata(hfdcan, rx_header.Identifier, rx_data); */
   }
 }
 
 /**
- * @brief CAN´íÎó´¦Àí»Øµ÷º¯Êı£¬ÖØÆôÏà¹ØÉè±¸
+ * @brief CANé”™è¯¯å¤„ç†å›è°ƒå‡½æ•°ï¼Œé‡å¯ç›¸å…³è®¾å¤‡
  *
  * @param hfdcan
  */
@@ -148,17 +161,17 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
 {
   FDCAN_FilterTypeDef fdcan_filter;
 
-  fdcan_filter.IdType = FDCAN_STANDARD_ID;             // ¹ıÂË±ê×¼ID
-  fdcan_filter.FilterIndex = 0;                        // ÂË²¨Æ÷Ë÷Òı
-  fdcan_filter.FilterType = FDCAN_FILTER_MASK;         // ÑÚÂëÄ£Ê½
-  fdcan_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; // ¹ıÂËÆ÷0¹ØÁªµ½FIFO0
-  fdcan_filter.FilterID1 = 0x00000000;                 // ²»È¥¹ıÂËÈÎºÎID
-  fdcan_filter.FilterID2 = 0x00000000;                 // Í¬ÉÏ
+  fdcan_filter.IdType = FDCAN_STANDARD_ID;             // è¿‡æ»¤æ ‡å‡†ID
+  fdcan_filter.FilterIndex = 0;                        // æ»¤æ³¢å™¨ç´¢å¼•
+  fdcan_filter.FilterType = FDCAN_FILTER_MASK;         // æ©ç æ¨¡å¼
+  fdcan_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; // è¿‡æ»¤å™¨0å…³è”åˆ°FIFO0
+  fdcan_filter.FilterID1 = 0x00000000;                 // ä¸å»è¿‡æ»¤ä»»ä½•ID
+  fdcan_filter.FilterID2 = 0x00000000;                 // åŒä¸Š
 
   HAL_FDCAN_Stop(hfdcan);
   HAL_FDCAN_DeInit(hfdcan);
   HAL_FDCAN_Init(hfdcan);
-  HAL_FDCAN_ConfigFilter(hfdcan, &fdcan_filter); // ½«ÉÏÊöÅäÖÃµ½CAN
+  HAL_FDCAN_ConfigFilter(hfdcan, &fdcan_filter); // å°†ä¸Šè¿°é…ç½®åˆ°CAN
   HAL_FDCAN_ConfigGlobalFilter(hfdcan, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
   HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_Start(hfdcan);

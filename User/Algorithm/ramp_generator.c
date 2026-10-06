@@ -48,7 +48,7 @@ void RampGenerator_Update(RampGenerator *ramp, unsigned long current_time_ms) {
         if (fabsf(error) > 1e-6f) {
             const int is_positive_direction = (error > 0);
             
-            // ºËÐÄÐÞ¸´£ºÅÐ¶ÏÊÇ·ñÔÚÔö´ó¾ø¶ÔÖµ
+            // æ ¸å¿ƒä¿®å¤ï¼šåˆ¤æ–­æ˜¯å¦åœ¨å¢žå¤§ç»å¯¹å€¼
             const int is_increasing_magnitude = 
                 (is_positive_direction && (fabsf(ramp->target_value) > fabsf(ramp->current_value))) ||
                 (!is_positive_direction && (fabsf(ramp->target_value) > fabsf(ramp->current_value)));
@@ -57,20 +57,20 @@ void RampGenerator_Update(RampGenerator *ramp, unsigned long current_time_ms) {
             delta = rate * time_step * (is_positive_direction ? 1.0f : -1.0f);
         }
 
-        // ·ÀÖ¹¹ý³å
+        // é˜²æ­¢è¿‡å†²
         float new_value = ramp->current_value + delta;
         if ((delta > 0 && new_value > ramp->target_value) || 
             (delta < 0 && new_value < ramp->target_value)) {
             new_value = ramp->target_value;
         }
 
-        // Ó¦ÓÃÏÞ·ù
+        // åº”ç”¨é™å¹…
         new_value = fminf(new_value, ramp->max_limit);
         new_value = fmaxf(new_value, -ramp->max_limit);
 
         ramp->current_value = new_value;
 
-        // ¾«¶È´¦Àí
+        // ç²¾åº¦å¤„ç†
         if (fabsf(ramp->current_value - ramp->target_value) < 1e-6f) {
             ramp->current_value = ramp->target_value;
             break;
