@@ -22,8 +22,8 @@ void Shoot_Init()
 	SHOOTMotor_init(DJI_M3508, ShootMotor_R);
 
 	// 摩擦轮电机
-	PID_Set(&Shoot.shoot_L_speed_pid, 9.8, 0, 0, SHOOTMOTOR_MAX_CURRENT, 0);
-	PID_Set(&Shoot.shoot_R_speed_pid, 10, 0, 0, SHOOTMOTOR_MAX_CURRENT, 0);
+	PID_Set(&Shoot.shoot_L_speed_pid, 9.8, 0, 0, 0.0f, SHOOTMOTOR_MAX_CURRENT, 0);
+	PID_Set(&Shoot.shoot_R_speed_pid, 10, 0, 0, 0.0f, SHOOTMOTOR_MAX_CURRENT, 0);
 
 
 }

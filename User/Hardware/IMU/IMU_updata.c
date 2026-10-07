@@ -79,7 +79,7 @@ void IMU_Init()
 
 	AHRS_init(IMU_data.AHRS.q, IMU_data.accel, IMU_data.mag); // AHRS滤波参数
 
-	PID_Set(&IMU_tempure_pid, 2000, 0.2, 0, 4500, 4400);
+	PID_Set(&IMU_tempure_pid, 2000, 0.2, 0, 0, 4500, 4400);
 
 	HAL_TIM_Base_Start(&htim3); // 加热电阻PWM
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);

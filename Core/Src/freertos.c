@@ -296,7 +296,6 @@ void Shoot_Task(void *argument)
     tx_buf[0] = BoardLink.body_gyro_z;
     tx_buf[1] = 0.0f;
     Vofa_SendFloat(tx_buf, 2);
-
     App_ShootStep();
     osDelay(1);
   }

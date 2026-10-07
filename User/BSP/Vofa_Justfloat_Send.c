@@ -1,5 +1,6 @@
 #include "USB_VirCom.h"
 #include <string.h>
+#include "UART_data_txrx.h"
 
 void Vofa_SendFloat(float *data, uint8_t num)
 {
@@ -12,6 +13,7 @@ void Vofa_SendFloat(float *data, uint8_t num)
     memcpy(tx_buf, data, num * sizeof(float));
     memcpy(tx_buf + num * sizeof(float), tail, 4);
 
-    Vircom_Send(tx_buf, num * sizeof(float) + 4);
+    UART_SendData(UART7_data, tx_buf, num * sizeof(float) + 4);
+    //Vircom_Send(tx_buf, num * sizeof(float) + 4);
 
 }

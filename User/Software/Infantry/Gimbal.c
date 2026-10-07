@@ -48,23 +48,23 @@ void Gimbal_Init()
     GIMBALMotor_init(GIMBAL_PITCH_MOTOR_TYPE, PITCHMotor);
     /*PID速度环初始化*/
     // 遥控
-    // PID_Set(&Gimbal.pitch_speed_pid, 10.0f, 0.0f, 0.0f, 1000000.0f, 1000000.0f);
+    // PID_Set(&Gimbal.pitch_speed_pid, 10.0f, 0.0f, 0.0f, 0.0f, 1000000.0f, 1000000.0f);
     // 自瞄
-    // PID_Set(&Gimbal.pitch_auto_speed_pid, 1500.0f, 0.0f, 0.0f, 1000000.0f, 1000000.0f);
+    // PID_Set(&Gimbal.pitch_auto_speed_pid, 1500.0f, 0.0f, 0.0f, 0.0f, 1000000.0f, 1000000.0f);
     /*PID位置环初始化*/
     // 遥控
-    PID_Set(&Gimbal.pitch_location_pid, 8.0f, 0.0f, 0.5f, 1718, 1000);
+    PID_Set(&Gimbal.pitch_location_pid, 8.0f, 0.0f, 0.5f, 0.0f, 1718, 1000);
     // 自瞄
-    PID_Set(&Gimbal.pitch_auto_location_pid, 5.1f, 0.0f, 0.0f, 1500, 1000);
+    PID_Set(&Gimbal.pitch_auto_location_pid, 5.1f, 0.0f, 0.0f, 0.0f, 1500, 1000);
 
     /* Yaw 电机位于底盘板；云台板在此初始化姿态位置外环。 */
-    PID_Set(&Gimbal.yaw_speed_pid, 500.0f, 0.0f, 10.0f,
+    PID_Set(&Gimbal.yaw_speed_pid, 500.0f, 0.0f, 10.0f, 0.0f,
             GIMBALMOTOR_MAX_CURRENT, GIMBALMOTOR_MAX_CURRENT);
-    PID_Set(&Gimbal.yaw_auto_speed_pid, 200.0f, 0.0f, 50.0f,
+    PID_Set(&Gimbal.yaw_auto_speed_pid, 200.0f, 0.0f, 50.0f, 0.0f,
             GIMBALMOTOR_MAX_CURRENT, GIMBALMOTOR_MAX_CURRENT);
-    PID_Set(&Gimbal.yaw_location_pid, 14.0f, 0.0f, 0.0f,
+    PID_Set(&Gimbal.yaw_location_pid, 14.0f, 0.0f, 0.0f, 0.0f,
             GIMBALMOTOR_MAX_CURRENT, 100);
-    PID_Set(&Gimbal.yaw_auto_location_pid, 15.0f, 0.03f, 1.0f,
+    PID_Set(&Gimbal.yaw_auto_location_pid, 15.0f, 0.03f, 1.0f, 0.0f,
             GIMBALMOTOR_MAX_CURRENT, 100);
 
     // 上电进入纠偏状态，等待云台到位
