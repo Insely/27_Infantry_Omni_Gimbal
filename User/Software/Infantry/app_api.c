@@ -135,7 +135,6 @@ static void App_LinkRx(void)
 
     Chassis_SetX(rx.vx);
     Chassis_SetY(rx.vy);
-    Chassis_SetR(rx.w);
     Global.Cap.mode = rx.cap_mode ? FULL : Not_FULL;
     Global.Chassis.input.reset = rx.reset;
     Global.Auto.mode = rx.auto_mode ? CAR : NONE;
@@ -190,7 +189,6 @@ static void App_LinkTx(void)
 
     BoardLink.vx = Global.Chassis.input.x;
     BoardLink.vy = Global.Chassis.input.y;
-    BoardLink.w = Global.Chassis.input.r;
     BoardLink.yaw_speed_cmd = Gimbal.yaw_speed_set;
     BoardLink.pitch = dm_imu_gimbal.pitch;
     BoardLink.yaw_cnt = dm_imu_gimbal.yaw;

@@ -18,14 +18,33 @@
 
 #include "cmsis_os2.h"
 
-#define RC_JOYSTICK_MAX 780.0f
+#define RC_JOYSTICK_MAX 660.0f
 #define CHASSIS_MAX_SPEED_X 2.5f              // 底盘x轴最大物理速度  m/s
 #define CHASSIS_MAX_SPEED_Y 2.5f              // 底盘y轴最大物理速度  m/s
+#define KEYBOARD_BRAKE_RATIO 0.60f            // 松键后的反向制动速度比例
+#define KEYBOARD_BRAKE_MIN_SPEED 1.3f         // 不超过该速度时不反转制动
+#define KEYBOARD_BRAKE_MIN_PRESS_MS 500U     // 持续按下超过 1s 才允许反转制动
+#define KEYBOARD_BRAKE_MAX_TIME_SPEED 2.10f   // 达到该速度时制动时间封顶
+#define KEYBOARD_BRAKE_MAX_TIME_MS 350U       // 最长反向制动时间
 static uint32_t mouse_l_press_start_time = 0; // 记录按下的起始时间戳
 static uint8_t is_mouse_l_pressed = 0;        // 记录鼠标左键的按压状态
 const uint32_t LONG_PRESS_MS = 250;           // 长按判定阈值
 static uint8_t look_aside_state = 0;          // X键侧视状态 0:正常 1:+90° 2:+270°
 static float look_aside_saved_yaw = 0;        // 侧视前保存的yaw角度
+
+typedef struct
+{
+    float last_speed;
+    float brake_speed;
+    uint32_t press_start_ms;
+    uint32_t brake_start_ms;
+    uint32_t brake_duration_ms;
+    uint8_t was_pressed;
+    uint8_t braking;
+} KeyboardBrakeAxis_t;
+
+static KeyboardBrakeAxis_t keyboard_brake_x;
+static KeyboardBrakeAxis_t keyboard_brake_y;
 
 RC_ctrl_t RC_data; // 云台板使用的遥控器数据
 
@@ -60,6 +79,80 @@ uint8_t Wait(uint8_t key)
 void SetWait(uint8_t key)
 {
     wait_time[key] = 100;
+}
+
+static void KeyboardBrake_ResetAxis(KeyboardBrakeAxis_t *axis)
+{
+    axis->last_speed = 0.0f;
+    axis->brake_speed = 0.0f;
+    axis->press_start_ms = 0U;
+    axis->brake_start_ms = 0U;
+    axis->brake_duration_ms = 0U;
+    axis->was_pressed = 0U;
+    axis->braking = 0U;
+}
+
+/**
+ * @brief 记录按键行进速度，并在该轴按键松开后短时反向制动
+ */
+static float KeyboardBrake_UpdateAxis(KeyboardBrakeAxis_t *axis,
+                                      uint8_t pressed,
+                                      float drive_speed,
+                                      uint32_t now_ms)
+{
+    if (pressed)
+    {
+        if (!axis->was_pressed)
+            axis->press_start_ms = now_ms;
+
+        axis->last_speed = drive_speed;
+        axis->was_pressed = 1U;
+        axis->braking = 0U;
+        return drive_speed;
+    }
+
+    if (axis->was_pressed)
+    {
+        const uint32_t press_duration_ms = (uint32_t)(now_ms - axis->press_start_ms);
+        float release_speed = axis->last_speed;
+        if (release_speed < 0.0f)
+            release_speed = -release_speed;
+
+        axis->was_pressed = 0U;
+        axis->press_start_ms = 0U;
+
+        /* 短按或 Ctrl 半速等慢速运动，松键时直接归零。 */
+        if (press_duration_ms <= KEYBOARD_BRAKE_MIN_PRESS_MS ||
+            release_speed <= KEYBOARD_BRAKE_MIN_SPEED)
+        {
+            axis->braking = 0U;
+            axis->brake_speed = 0.0f;
+            axis->brake_duration_ms = 0U;
+            return 0.0f;
+        }
+
+        if (release_speed > KEYBOARD_BRAKE_MAX_TIME_SPEED)
+            release_speed = KEYBOARD_BRAKE_MAX_TIME_SPEED;
+
+        axis->braking = 1U;
+        axis->brake_start_ms = now_ms;
+        axis->brake_speed = -axis->last_speed * KEYBOARD_BRAKE_RATIO;
+        axis->brake_duration_ms = (uint32_t)(
+            (release_speed - KEYBOARD_BRAKE_MIN_SPEED) * KEYBOARD_BRAKE_MAX_TIME_MS /
+            (KEYBOARD_BRAKE_MAX_TIME_SPEED - KEYBOARD_BRAKE_MIN_SPEED));
+    }
+
+    if (axis->braking)
+    {
+        if ((uint32_t)(now_ms - axis->brake_start_ms) < axis->brake_duration_ms)
+            return axis->brake_speed;
+
+        axis->braking = 0U;
+        axis->brake_speed = 0.0f;
+        axis->brake_duration_ms = 0U;
+    }
+
+    return 0.0f;
 }
 
 /*----------------------------------- 遥控数据更新 --------------------------------------*/
@@ -225,7 +318,7 @@ void RC_Controller()
     /*控制模式选择*/
     if ((RC_data.rc.s[0] == RC_SW_DOWN && RC_data.rc.s[1] == RC_SW_DOWN) || (RC_data.online <= 0)) // 右上左下，锁死
         Global.Control.mode = LOCK;
-    else if (RC_data.rc.s[0] == RC_SW_UP && RC_data.rc.s[1] == RC_SW_UP) // S挡，键盘控制
+    else if (RC_data.rc.s[0] == RC_SW_DOWN && RC_data.rc.s[1] == RC_SW_UP) // S挡，键盘控制
         Global.Control.mode = KEY;
     else
         Global.Control.mode = RC;
@@ -246,7 +339,7 @@ void RC_Controller()
     if (RC_data.rc.s[0] == RC_SW_UP && RC_data.rc.s[1] == RC_SW_MID) // 滚轮向下，正小陀螺
     {
         Global.Chassis.mode = SPIN_P;
-        Global.Chassis.input.y= -(RC_data.rc.ch[2] / RC_JOYSTICK_MAX) * CHASSIS_MAX_SPEED_X;
+        Global.Chassis.input.y = -(RC_data.rc.ch[2] / RC_JOYSTICK_MAX) * CHASSIS_MAX_SPEED_X;
         Global.Chassis.input.x = (RC_data.rc.ch[3] / RC_JOYSTICK_MAX) * CHASSIS_MAX_SPEED_Y;
         Chassis_SetX(Global.Chassis.input.x);
         Chassis_SetY(Global.Chassis.input.y);
@@ -325,25 +418,39 @@ void RC_Controller()
 void Keyboard_MouseController(void)
 {
     if (Global.Control.mode != KEY)
+    {
+        KeyboardBrake_ResetAxis(&keyboard_brake_x);
+        KeyboardBrake_ResetAxis(&keyboard_brake_y);
         return;
+    }
 #if USE_GIMBAL
     /* 云台未到位前禁止键鼠控制 */
     if (Gimbal.State != NORMALLY)
+    {
+        KeyboardBrake_ResetAxis(&keyboard_brake_x);
+        KeyboardBrake_ResetAxis(&keyboard_brake_y);
         return;
+    }
 #endif
     /*底盘控制*/
+    const float keyboard_speed = IF_KEY_PRESSED_CTRL ? 0.8f : 2.5f;
+    const uint8_t x_pressed = IF_KEY_PRESSED_W || IF_KEY_PRESSED_S;
+    const uint8_t y_pressed = IF_KEY_PRESSED_A || IF_KEY_PRESSED_D;
+    float keyboard_x = 0.0f;
+    float keyboard_y = 0.0f;
+
     if (IF_KEY_PRESSED_W)
-        Chassis_SetY(2.5f);
+        keyboard_x = keyboard_speed;
     if (IF_KEY_PRESSED_S)
-        Chassis_SetY(-2.5f);
-    if (IF_KEY_PRESSED_D)
-        Chassis_SetX(2.5f);
+        keyboard_x = -keyboard_speed;
     if (IF_KEY_PRESSED_A)
-        Chassis_SetX(-2.5f);
-    if (!IF_KEY_PRESSED_W && !IF_KEY_PRESSED_S)
-        Chassis_SetY(0);
-    if (!IF_KEY_PRESSED_A && !IF_KEY_PRESSED_D)
-        Chassis_SetX(0);
+        keyboard_y = keyboard_speed;
+    if (IF_KEY_PRESSED_D)
+        keyboard_y = -keyboard_speed;
+
+    const uint32_t now_ms = Get_SysTime_ms();
+    Chassis_SetX(KeyboardBrake_UpdateAxis(&keyboard_brake_x, x_pressed, keyboard_x, now_ms));
+    Chassis_SetY(KeyboardBrake_UpdateAxis(&keyboard_brake_y, y_pressed, keyboard_y, now_ms));
     if (IF_KEY_PRESSED_SHIFT) // 超电开关
     {
         Global.Cap.mode = FULL;
@@ -373,7 +480,7 @@ void Keyboard_MouseController(void)
         App_RequestUiReset();
     }
 
-        if (IF_KEY_PRESSED_X || Wait(WAIT_X)) // 装弹键
+    if (IF_KEY_PRESSED_X || Wait(WAIT_X)) // 装弹键
     {
         if (Wait(WAIT_X))
         {

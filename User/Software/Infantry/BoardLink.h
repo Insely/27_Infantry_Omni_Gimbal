@@ -10,8 +10,9 @@
 #define BOARD_LINK_FAST_RESEND_COUNT      5U     /* 收到请求后快速重发的次数 */
 #define BOARD_LINK_YAW_SPEED_LIMIT_RAD_S  20.0f  /* Yaw 速度指令限幅，单位：rad/s */
 
-#define BL_ID_CONTROL_MODE 0x104U
-#define BL_ID_TRIGGER_MODE 0x108U
+#define BL_ID_YAW_SPEED_CMD 0x102U
+#define BL_ID_CONTROL_MODE  0x104U
+#define BL_ID_TRIGGER_MODE  0x108U
 
 /* 线协议枚举值固定，不依赖应用层枚举的排列顺序（协议版本 2）。 */
 enum { BL_RC = 0, BL_LOCK = 1, BL_KEY = 2 };
@@ -24,7 +25,6 @@ typedef struct
     /* 云台板发送到底盘板。 */
     float vx;
     float vy;
-    float w;
     volatile float yaw_speed_cmd;       /* Yaw 电机速度指令，单位：rad/s */
     float pitch;
     float yaw_cnt;

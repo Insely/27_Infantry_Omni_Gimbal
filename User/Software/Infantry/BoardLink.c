@@ -40,7 +40,7 @@ typedef enum
     BOARD_LINK_REFEREE_SHOOT_DATA = 0x091,
     BOARD_LINK_REFEREE_AMMO_DATA  = 0x092,
     BOARD_LINK_CHASSIS_SPEED_XY   = 0x101,
-    BOARD_LINK_CHASSIS_SPEED_W    = 0x102,
+    BOARD_LINK_YAW_SPEED_CMD      = BL_ID_YAW_SPEED_CMD,
     BOARD_LINK_CHASSIS_MODE       = 0x104,
     BOARD_LINK_IMU_ATTITUDE       = 0x105,
     BOARD_LINK_IMU_GYRO           = 0x106,
@@ -493,10 +493,9 @@ static void BoardLink_PackChassisSpeedXY(uint8_t data[BOARD_LINK_FRAME_LEN])
     BoardLink_StoreFloat(BoardLink.vy, &data[4]);
 }
 
-static void BoardLink_PackChassisSpeedW(uint8_t data[BOARD_LINK_FRAME_LEN])
+static void BoardLink_PackYawSpeedCmd(uint8_t data[BOARD_LINK_FRAME_LEN])
 {
-    BoardLink_StoreFloat(BoardLink.w, &data[0]);
-    BoardLink_StoreFloat(BoardLink.yaw_speed_cmd, &data[4]);
+    BoardLink_StoreFloat(BoardLink.yaw_speed_cmd, &data[0]);
 }
 
 static void BoardLink_PackChassisMode(uint8_t data[BOARD_LINK_FRAME_LEN])
@@ -557,7 +556,7 @@ static void BoardLink_ReceiveRefereeAmmoData(uint8_t data[BOARD_LINK_FRAME_LEN])
 }
 
 static const BoardLinkTxFrame_t tx_frames[] = {
-    { BOARD_LINK_CHASSIS_SPEED_W,  BoardLink_PackChassisSpeedW,  1, 0 },
+    { BOARD_LINK_YAW_SPEED_CMD,    BoardLink_PackYawSpeedCmd,    1, 0 },
     { BOARD_LINK_CHASSIS_MODE,     BoardLink_PackChassisMode,    5, 1 },
     { BOARD_LINK_TRIGGER_MODE,     BoardLink_PackTriggerMode,    5, 3 },
     { BOARD_LINK_CHASSIS_SPEED_XY, BoardLink_PackChassisSpeedXY, 2, 0 },
@@ -715,11 +714,11 @@ static void BoardLink_ReceiveChassisSpeedXY(uint8_t data[BOARD_LINK_FRAME_LEN])
     BoardLink.vx = x; BoardLink.vy = y;
 }
 
-static void BoardLink_ReceiveChassisSpeedW(uint8_t data[BOARD_LINK_FRAME_LEN])
+static void BoardLink_ReceiveYawSpeedCmd(uint8_t data[BOARD_LINK_FRAME_LEN])
 {
-    float w = BoardLink_LoadFloat(data), yaw = BoardLink_LoadFloat(data + 4);
-    if (!isfinite(w) || !isfinite(yaw) || fabsf(w) > 20.0f || fabsf(yaw) > BOARD_LINK_YAW_SPEED_LIMIT_RAD_S) return;
-    BoardLink.w = w; BoardLink.yaw_speed_cmd = yaw;
+    float yaw_speed_cmd = BoardLink_LoadFloat(data);
+    if (!isfinite(yaw_speed_cmd) || fabsf(yaw_speed_cmd) > BOARD_LINK_YAW_SPEED_LIMIT_RAD_S) return;
+    BoardLink.yaw_speed_cmd = yaw_speed_cmd;
 }
 
 static void BoardLink_ReceiveChassisMode(uint8_t data[BOARD_LINK_FRAME_LEN])
@@ -760,7 +759,7 @@ static const BoardLinkTxFrame_t tx_frames[] = {
 
 static const BoardLinkRxFrame_t rx_frames[] = {
     { BOARD_LINK_CHASSIS_SPEED_XY, BoardLink_ReceiveChassisSpeedXY },
-    { BOARD_LINK_CHASSIS_SPEED_W,  BoardLink_ReceiveChassisSpeedW },
+    { BOARD_LINK_YAW_SPEED_CMD,    BoardLink_ReceiveYawSpeedCmd },
     { BOARD_LINK_CHASSIS_MODE,     BoardLink_ReceiveChassisMode },
     { BOARD_LINK_IMU_ATTITUDE,     BoardLink_ReceiveIMUAttitude },
     { BOARD_LINK_IMU_GYRO,         BoardLink_ReceiveIMUGyro },

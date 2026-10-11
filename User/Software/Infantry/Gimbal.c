@@ -154,7 +154,7 @@ void Gimbal_YawCalculater(void)
         Gimbal.yaw_speed_set =
             PID_Cal(&Gimbal.yaw_location_pid,
                     Gimbal.yaw_location_now,
-                    Gimbal.yaw_location_set) * DEG_TO_RAD -BoardLink.body_gyro_z;
+                    Gimbal.yaw_location_set) * DEG_TO_RAD; //
 
         if (Global.Chassis.mode == FLOW)
         {
